@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!--  2.配置HandlerMapping-->
+<!--    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">-->
+<!--        <property name="useSuffixPatternMatch" value="false"/>-->
+<!--    </bean>-->
+
+    <!--  3.配置HandlerAdapter-->
+<!--    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter"/>-->
+    <!--mvc的注解驱动，用来简化配置,默认会加载内置的类型转换器-->
+    <mvc:annotation-driven conversion-service="conversionService">
+        <mvc:message-converters>
+<!--            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>-->
+<!--            <bean class="org.springframework.http.converter.json.GsonHttpMessageConverter"/>-->
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <property name="supportedMediaTypes" value="application/json"/>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!--  4.配置Handler  -->
+    <context:component-scan base-package="controller,ajax"/>
+
+    <!--  5.配置ViewResolver   -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/view/"/>
+        <property name="suffix" value=".jsp"/>
+        <!--  6.配置view，使用jsp视图技术渲染页面-->
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+    </bean>
+
+<!--    使用tomcat提供的默认Servlet处理静态资源-->
+<!--    <mvc:default-servlet-handler/>-->
+
+    <mvc:resources mapping="/img/**" location="/WEB-INF/img/"/>
+    <mvc:resources mapping="/css/**" location="/WEB-INF/css/"/>
+    <mvc:resources mapping="/js/**" location="/WEB-INF/js/"/>
+    <mvc:resources mapping="/img2/**" location="/img2/"/>
+<!--    直接访问jsp页面-->
+    <mvc:view-controller path="/userLogin" view-name="login"/>
+    <mvc:view-controller path="/userRegister" view-name="register"/>
+    <mvc:view-controller path="/showAjax" view-name="ajax"/>
+    <mvc:view-controller path="/uploadFile" view-name="file"/>
+
+    <!--管理自定义转换器-->
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="converter.String2AddressConverter"/>
+                <bean class="converter.Address2StringConverter"/>
+            </set>
+        </property>
+    </bean>
+    <!--配置文件解析器，id名称必须为multipartResolver-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSizePerFile" value="5000000"/>
+    </bean>
+
+    <!--配置拦截器-->
+    <mvc:interceptors>
+        <!--拦截器1-->
+            <bean class="interceptor.FirstInterceptor"/>
+        <!--拦截器2-->
+        <mvc:interceptor>
+            <!--配置拦截器的作用路径-->
+            <mvc:mapping path="/path/**"/>
+            <mvc:exclude-mapping path="/path/showLogin"/>
+            <!--定义在<mvc:interceptor>下面的表示匹配指定路径的请求才进行拦截-->
+            <bean class="interceptor.SecondInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+</beans>
